@@ -209,6 +209,14 @@ async function pollStatus() {
         if (data.last_run) {
             elements.lastRunTime.textContent = formatTime(data.last_run.started_at);
         }
+        
+        // Show serverless indicator if applicable
+        if (data.is_serverless) {
+            const statusText = elements.statusText;
+            if (!statusText.textContent.includes('Serverless')) {
+                statusText.textContent = statusText.textContent + ' (Serverless)';
+            }
+        }
     } catch (error) {
         console.error('Status poll error:', error);
     }
@@ -243,25 +251,48 @@ async function triggerRun() {
     }
 }
 
-/* ==================== SERVER-SENT EVENTS ==================== */
+/* ==================== SERVER-SENT EVENTS / POLLING ==================== */
 
 function initializeLogStream() {
-    state.eventSource = new EventSource('/api/logs');
+    // Try SSE first, fallback to polling for serverless
+    try {
+        state.eventSource = new EventSource('/api/logs');
+        
+        state.eventSource.onmessage = function(event) {
+            const log = JSON.parse(event.data);
+            addLog(log);
+        };
+        
+        state.eventSource.onerror = function(error) {
+            console.log('SSE not available, switching to polling mode');
+            state.eventSource.close();
+            state.eventSource = null;
+            // Use polling instead
+            startLogPolling();
+        };
+    } catch (e) {
+        console.log('SSE not supported, using polling mode');
+        startLogPolling();
+    }
+}
+
+function startLogPolling() {
+    let lastLogCount = 0;
     
-    state.eventSource.onmessage = function(event) {
-        const log = JSON.parse(event.data);
-        addLog(log);
-    };
-    
-    state.eventSource.onerror = function(error) {
-        console.error('SSE connection error:', error);
-        // Attempt to reconnect after 5 seconds
-        setTimeout(() => {
-            if (state.eventSource.readyState === EventSource.CLOSED) {
-                initializeLogStream();
+    setInterval(async () => {
+        try {
+            const response = await fetch('/api/logs');
+            const data = await response.json();
+            
+            if (data.logs && data.logs.length > lastLogCount) {
+                const newLogs = data.logs.slice(lastLogCount);
+                newLogs.forEach(log => addLog(log));
+                lastLogCount = data.logs.length;
             }
-        }, 5000);
-    };
+        } catch (error) {
+            console.error('Log polling error:', error);
+        }
+    }, 2000); // Poll every 2 seconds
 }
 
 /* ==================== EVENT LISTENERS ==================== */

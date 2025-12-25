@@ -9,12 +9,16 @@ import asyncio
 import threading
 import json
 import time
+import os
 from pathlib import Path
 from datetime import datetime, timedelta
 from core.token_fetcher import run_token_fetch, LogCollector
 
 # Load environment variables
 load_dotenv()
+
+# Detect serverless environment (Vercel)
+IS_SERVERLESS = os.getenv('VERCEL') == '1' or os.getenv('AWS_LAMBDA_FUNCTION_NAME') is not None
 
 app = Flask(__name__)
 
@@ -25,10 +29,13 @@ job_state = {
     'last_run': None,
     'history': [],
     'stats': {},
-    'log_collector': LogCollector()
+    'log_collector': LogCollector(),
+    'is_serverless': IS_SERVERLESS
 }
 
-HISTORY_FILE = Path('data/run_history.json')
+# Use /tmp for serverless, data/ for local
+HISTORY_DIR = Path('/tmp') if IS_SERVERLESS else Path('data')
+HISTORY_FILE = HISTORY_DIR / 'run_history.json'
 
 
 def load_history():
@@ -57,8 +64,66 @@ def save_history():
         pass
 
 
+def run_sync_job():
+    """Run token fetch synchronously (for serverless environments)."""
+    job_state['status'] = 'running'
+    job_state['current_run'] = {
+        'started_at': datetime.now().isoformat(),
+        'run_number': len(job_state['history']) + 1
+    }
+    job_state['stats'] = {
+        'completed': 0,
+        'total': 0,
+        'success': 0,
+        'failed': 0,
+        'timed_out': 0,
+        'current_region': 'Initializing...'
+    }
+    job_state['log_collector'].add("🚀 Starting new token fetch run (serverless mode)", "info")
+    
+    # Run async task with timeout
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    try:
+        # Serverless timeout: 50 seconds max
+        result = loop.run_until_complete(
+            asyncio.wait_for(run_token_fetch(job_state['log_collector']), timeout=50)
+        )
+        
+        # Update state
+        job_state['status'] = 'completed'
+        job_state['last_run'] = {
+            **job_state['current_run'],
+            'completed_at': datetime.now().isoformat(),
+            'result': result,
+            'elapsed': result.get('elapsed', 0)
+        }
+        
+        # Add to history
+        job_state['history'].append(job_state['last_run'])
+        save_history()
+        
+        job_state['current_run'] = None
+        
+        return {'status': 'completed', 'result': result}
+        
+    except asyncio.TimeoutError:
+        job_state['status'] = 'timeout'
+        job_state['log_collector'].add("⏱️ Serverless timeout (50s) - partial results saved", "warning")
+        return {'status': 'timeout', 'message': 'Execution timed out after 50s'}
+    
+    except Exception as e:
+        job_state['status'] = 'error'
+        job_state['log_collector'].add(f"❌ Critical error: {str(e)}", "error")
+        return {'status': 'error', 'message': str(e)}
+    
+    finally:
+        loop.close()
+
+
 def run_async_job():
-    """Run token fetch in background thread."""
+    """Run token fetch in background thread (for local development)."""
     def async_wrapper():
         job_state['status'] = 'running'
         job_state['current_run'] = {
@@ -122,8 +187,14 @@ def trigger_run():
     if job_state['status'] == 'running':
         return jsonify({'status': 'already_running'}), 409
     
-    run_async_job()
-    return jsonify({'status': 'started'}), 200
+    if IS_SERVERLESS:
+        # Serverless: execute synchronously and return result
+        result = run_sync_job()
+        return jsonify(result), 200
+    else:
+        # Local: execute in background thread
+        run_async_job()
+        return jsonify({'status': 'started'}), 200
 
 
 @app.route('/api/status')
@@ -133,13 +204,23 @@ def get_status():
         'status': job_state['status'],
         'current_run': job_state['current_run'],
         'last_run': job_state['last_run'],
-        'stats': job_state['stats']
+        'stats': job_state['stats'],
+        'is_serverless': IS_SERVERLESS,
+        'mode': 'serverless' if IS_SERVERLESS else 'local'
     })
 
 
 @app.route('/api/logs')
 def stream_logs():
     """Server-Sent Events endpoint for log streaming."""
+    if IS_SERVERLESS:
+        # Serverless: return current logs as JSON (no streaming)
+        return jsonify({
+            'logs': job_state['log_collector'].get_recent(100),
+            'message': 'Serverless mode - use polling instead of SSE'
+        })
+    
+    # Local: use SSE streaming
     def generate():
         last_count = 0
         while True:
