@@ -2,17 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "web_app.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxDuration": 300
-      }
+      "src": "api/index.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "web_app.py"
+      "dest": "api/index.py"
     }
-  ]
+  ],
+  "env": {
+    "PYTHON_VERSION": "3.10"
+  }
 }
