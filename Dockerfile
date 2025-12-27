@@ -12,11 +12,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy your app code
-COPY app.py .
+# Copy ALL app code (not just app.py)
+COPY . .
 
-# Expose port
-EXPOSE 5000
+# Expose port (Render uses 10000 by default, but we'll use PORT env var)
+EXPOSE 10000
 
-# Start the Flask app
-CMD ["python", "app.py"]
+# Start the Flask app with gunicorn for production
+CMD gunicorn --bind 0.0.0.0:$PORT app:app --workers 2 --timeout 0

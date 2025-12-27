@@ -22,8 +22,10 @@ load_dotenv()
 # Initialize Database
 db.init_db()
 
-# Detect serverless environment (Vercel)
-IS_SERVERLESS = os.getenv('VERCEL') == '1' or os.getenv('AWS_LAMBDA_FUNCTION_NAME') is not None
+# Detect serverless environment (Vercel/Lambda)
+# Render is NOT serverless - it runs as a long-lived web service
+IS_RENDER = os.getenv('RENDER') == 'true'
+IS_SERVERLESS = (os.getenv('VERCEL') == '1' or os.getenv('AWS_LAMBDA_FUNCTION_NAME') is not None) and not IS_RENDER
 
 # Security settings
 RUN_ENABLED = os.getenv('RUN_ENABLED', 'false').lower() == 'true'
@@ -351,10 +353,18 @@ def get_config():
 @app.route('/health')
 def health():
     """Enhanced health check endpoint."""
+    # Determine environment name
+    if IS_RENDER:
+        env_name = "render"
+    elif IS_SERVERLESS:
+        env_name = "serverless"
+    else:
+        env_name = "local"
+    
     return jsonify({
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "environment": "serverless" if IS_SERVERLESS else "local",
+        "environment": env_name,
         "security": {
             "run_enabled": RUN_ENABLED,
             "auth_required": True
