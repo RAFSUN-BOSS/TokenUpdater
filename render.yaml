@@ -11,7 +11,7 @@ services:
     startCommand: gunicorn --bind 0.0.0.0:$PORT app:app --workers 2 --timeout 0
     envVars:
       - key: PYTHON_VERSION
-        value: "3.11.0"
+        value: "3.11.6"
       - key: DATABASE_URL
         sync: false  # You'll add this manually in dashboard
       - key: GITHUB_TOKEN
