@@ -1,3 +1,6 @@
+/* ================================================
+   Theme Variables - Dark Cyberpunk (Default)
+   ================================================ */
 :root {
     --bg-core: #050505;
     --bg-surface: #0f0f0f;
@@ -13,6 +16,124 @@
     --glass-blur: blur(12px);
     --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
     --ease-in-out-quint: cubic-bezier(0.645, 0.045, 0.355, 1);
+
+    /* Theme-specific overrides */
+    --mesh-gradient-1: rgba(255, 69, 0, 0.05);
+    --mesh-gradient-2: rgba(189, 0, 255, 0.05);
+    --grid-opacity: 0.3;
+    --success-color: #00ff88;
+    --error-color: #ff3366;
+    --warning-color: #ffaa00;
+}
+
+/* ================================================
+   Sage Mist Theme - Light & Relaxing
+   ================================================ */
+[data-theme="sage"] {
+    --bg-core: #E6EFEA;
+    --bg-surface: #D3E0DA;
+    --primary: #7FA69A;
+    --primary-glow: rgba(127, 166, 154, 0.4);
+    --accent-cyan: #5A8F82;
+    --accent-purple: #8BA69E;
+    --text-main: #2F3E3A;
+    --text-muted: #5C6E68;
+    --border-light: rgba(47, 62, 58, 0.15);
+    --glass-bg: rgba(183, 201, 191, 0.7);
+    --glass-blur: blur(12px);
+
+    /* Theme-specific overrides */
+    --mesh-gradient-1: rgba(127, 166, 154, 0.15);
+    --mesh-gradient-2: rgba(90, 143, 130, 0.1);
+    --grid-opacity: 0.15;
+    --success-color: #4A9E7C;
+    --error-color: #C47474;
+    --warning-color: #B5985A;
+}
+
+/* ================================================
+   Theme Toggle Button
+   ================================================ */
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--border-light);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s var(--ease-in-out-quint);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1) rotate(10deg);
+    border-color: var(--primary);
+    box-shadow: 0 6px 24px var(--primary-glow);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
+}
+
+.theme-icon {
+    width: 22px;
+    height: 22px;
+    transition: all 0.4s var(--ease-in-out-quint);
+    position: absolute;
+    stroke: var(--text-main);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Dark theme: show moon, hide sun */
+.theme-icon-dark {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+.theme-icon-light {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+}
+
+/* Sage theme: show sun, hide moon */
+[data-theme="sage"] .theme-icon-dark {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.5);
+}
+
+[data-theme="sage"] .theme-icon-light {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+/* Smooth theme transition for all elements */
+body,
+.glass-card,
+.nav-tabs,
+.nav-tab,
+.btn-primary,
+.terminal,
+.run-widget,
+.history-card,
+.theme-toggle,
+h1,
+h2,
+h3,
+h4,
+p,
+span,
+div {
+    transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
 * {
@@ -38,8 +159,9 @@ body {
     height: 100%;
     z-index: -2;
     background:
-        radial-gradient(circle at 20% 30%, rgba(255, 69, 0, 0.05) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(189, 0, 255, 0.05) 0%, transparent 40%);
+        radial-gradient(circle at 20% 30%, var(--mesh-gradient-1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, var(--mesh-gradient-2) 0%, transparent 40%);
+    transition: background 0.5s ease;
 }
 
 /* Grid Overlay */
@@ -56,7 +178,8 @@ body {
     background-size: 40px 40px;
     mask-image: radial-gradient(circle at center, black, transparent 80%);
     pointer-events: none;
-    opacity: 0.3;
+    opacity: var(--grid-opacity);
+    transition: opacity 0.5s ease;
 }
 
 .container {

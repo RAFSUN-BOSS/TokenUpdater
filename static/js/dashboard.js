@@ -33,6 +33,41 @@ function calculateSpeed(completed, startTime) {
     return (completed / elapsed).toFixed(1);
 }
 
+/* ==================== THEME MANAGEMENT ==================== */
+
+const THEME_KEY = 'tsun-dashboard-theme';
+
+function getStoredTheme() {
+    return localStorage.getItem(THEME_KEY) || 'dark';
+}
+
+function setTheme(theme) {
+    if (theme === 'sage') {
+        document.documentElement.setAttribute('data-theme', 'sage');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem(THEME_KEY, theme);
+}
+
+function toggleTheme() {
+    const currentTheme = getStoredTheme();
+    const newTheme = currentTheme === 'dark' ? 'sage' : 'dark';
+    setTheme(newTheme);
+    console.log(`🎨 Theme switched to: ${newTheme === 'sage' ? 'Sage Mist' : 'Dark Cyberpunk'}`);
+}
+
+function initializeTheme() {
+    const savedTheme = getStoredTheme();
+    setTheme(savedTheme);
+
+    // Add click listener to theme toggle button
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+}
+
 /* ==================== TAB MANAGEMENT ==================== */
 
 function showTab(tabName) {
@@ -307,6 +342,14 @@ function updateHistory(history) {
     // Update run count badge
     elements.historyCount.textContent = `${history.length} runs`;
 
+    // Update last run time from most recent history entry
+    const mostRecent = history[history.length - 1]; // Last entry is the most recent
+    if (mostRecent && mostRecent.started_at) {
+        elements.lastRunTime.textContent = formatTime(mostRecent.started_at);
+    } else if (mostRecent && mostRecent.completed_at) {
+        elements.lastRunTime.textContent = formatTime(mostRecent.completed_at);
+    }
+
     // Region flags mapping
     const regionFlags = {
         'BD': '🇧🇩',
@@ -579,6 +622,9 @@ function initializeEventListeners() {
 /* ==================== INITIALIZATION ==================== */
 
 function initialize() {
+    // Initialize theme first (before anything else to prevent flash)
+    initializeTheme();
+
     // Clear logs on page load (ephemeral logs - don't store in browser)
     clearLogs();
 
@@ -597,6 +643,7 @@ function initialize() {
 
     console.log('🔥 TSun Dashboard initialized successfully');
     console.log('📝 Logs are ephemeral - cleared on refresh and after execution');
+    console.log('🎨 Theme:', getStoredTheme() === 'sage' ? 'Sage Mist' : 'Dark Cyberpunk');
 }
 
 /* ==================== PAGE LOAD ==================== */
