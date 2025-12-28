@@ -90,8 +90,10 @@
                         style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">
                         API Load Distribution</h3>
                     <div id="api-distribution" style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
-                        <div style="margin-bottom: 4px;">🔵 API-1: <span id="api-1-count" style="color: var(--accent-cyan);">-</span></div>
-                        <div style="margin-bottom: 4px;">🟣 API-2: <span id="api-2-count" style="color: var(--accent-purple);">-</span></div>
+                        <div style="margin-bottom: 4px;">🔵 API-1: <span id="api-1-count"
+                                style="color: var(--accent-cyan);">-</span></div>
+                        <div style="margin-bottom: 4px;">🟣 API-2: <span id="api-2-count"
+                                style="color: var(--accent-purple);">-</span></div>
                         <div>🟠 API-3: <span id="api-3-count" style="color: var(--primary);">-</span></div>
                     </div>
                 </div>
@@ -105,7 +107,8 @@
                         <div>
                             <h2 style="font-size: 18px; margin-bottom: 4px;">ACTIVE EXECUTION</h2>
                             <p style="font-size: 12px; color: var(--text-muted);">
-                                PROCESSING: <span id="current-region" class="mono" style="color: var(--primary);">INITIALIZING</span>
+                                PROCESSING: <span id="current-region" class="mono"
+                                    style="color: var(--primary);">INITIALIZING</span>
                                 <span style="opacity: 0.6; margin-left: 12px;">⚡ 3 APIs in Parallel</span>
                             </p>
                         </div>
@@ -134,29 +137,20 @@
 
                 <!-- History -->
                 <section class="fade-in-up" style="animation-delay: 0.4s;">
-                    <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">
-                        Execution History</h3>
-                    <div class="glass-card" style="padding: 0; overflow: hidden;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                            <thead
-                                style="background: var(--bg-surface); text-align: left; color: var(--text-muted); text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em;">
-                                <tr>
-                                    <th style="padding: 12px 16px;">Run ID</th>
-                                    <th style="padding: 12px 16px;">Region</th>
-                                    <th style="padding: 12px 16px;">Accounts</th>
-                                    <th style="padding: 12px 16px;">Success %</th>
-                                    <th style="padding: 12px 16px;">Duration</th>
-                                </tr>
-                            </thead>
-                            <tbody id="history-tbody">
-                                <tr>
-                                    <td colspan="5"
-                                        style="padding: 40px; text-align: center; color: var(--text-muted); font-style: italic;">
-                                        No historical data found
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">
+                            Execution History</h3>
+                        <span class="history-count" id="history-count">0 runs</span>
+                    </div>
+                    <div class="glass-card history-card">
+                        <div class="history-grid-container" id="history-grid">
+                            <div class="history-empty-state">
+                                <div class="empty-icon">📊</div>
+                                <p>No historical data found</p>
+                                <span>Execute a token refresh to see history</span>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>

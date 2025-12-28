@@ -116,7 +116,8 @@ const elements = {
     failedCount: document.getElementById('failed-count'),
     speedMetric: document.getElementById('speed-metric'),
     logContainer: document.getElementById('log-container'),
-    historyTbody: document.getElementById('history-tbody'),
+    historyGrid: document.getElementById('history-grid'),
+    historyCount: document.getElementById('history-count'),
     api1Count: document.getElementById('api-1-count'),
     api2Count: document.getElementById('api-2-count'),
     api3Count: document.getElementById('api-3-count')
@@ -301,37 +302,69 @@ function updateConsoleProgress(region, completed, total, timer) {
 function updateHistory(history) {
     if (!history || history.length === 0) return;
 
-    elements.historyTbody.innerHTML = '';
+    elements.historyGrid.innerHTML = '';
+
+    // Update run count badge
+    elements.historyCount.textContent = `${history.length} runs`;
+
+    // Region flags mapping
+    const regionFlags = {
+        'BD': '🇧🇩',
+        'IND': '🇮🇳',
+        'PK': '🇵🇰',
+        'BR': '🇧🇷',
+        'ID': '🇮🇩',
+        'TH': '🇹🇭',
+        'VN': '🇻🇳',
+        'SG': '🇸🇬',
+        'MY': '🇲🇾',
+        'TW': '🇹🇼'
+    };
 
     // Reverse to show newest first
     const reversedHistory = [...history].reverse();
 
     reversedHistory.forEach(run => {
         if (run.result && run.result.results) {
-            run.result.results.forEach(regionResult => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-slate-700/30 transition-colors';
+            const widget = document.createElement('div');
+            widget.className = 'run-widget fade-in-up';
 
+            // Calculate total duration for this run
+            const totalDuration = run.result.results.reduce((sum, r) => sum + (r.duration || 0), 0) || run.elapsed;
+
+            // Build region stats HTML
+            const regionsHTML = run.result.results.map(regionResult => {
                 const successRate = regionResult.success_rate;
                 const badgeClass = successRate >= 95
-                    ? 'badge-success'
+                    ? 'excellent'
                     : successRate >= 80
-                        ? 'badge-warning'
-                        : 'badge-error';
+                        ? 'good'
+                        : 'poor';
+                const flag = regionFlags[regionResult.region] || '🌐';
 
-                row.innerHTML = `
-                    <td style="padding: 12px 16px;" class="text-white font-medium">#${run.run_number}</td>
-                    <td style="padding: 12px 16px;" class="text-gray-300 mono">${regionResult.region}</td>
-                    <td style="padding: 12px 16px;" class="text-gray-300 mono">${regionResult.total}</td>
-                    <td style="padding: 12px 16px;">
-                        <span class="badge ${badgeClass}">
-                            ${successRate.toFixed(1)}%
-                        </span>
-                    </td>
-                    <td style="padding: 12px 16px;" class="text-gray-300 mono">${formatDuration(regionResult.duration || run.elapsed)}</td>
+                return `
+                    <div class="region-stat">
+                        <div class="region-info">
+                            <span class="region-flag">${flag}</span>
+                            <span class="region-name">${regionResult.region}</span>
+                            <span class="region-accounts">${regionResult.total} acc</span>
+                        </div>
+                        <span class="success-badge ${badgeClass}">${successRate.toFixed(1)}%</span>
+                    </div>
                 `;
-                elements.historyTbody.appendChild(row);
-            });
+            }).join('');
+
+            widget.innerHTML = `
+                <div class="run-widget-header">
+                    <span class="run-number">#${run.run_number}</span>
+                    <span class="run-duration">${formatDuration(totalDuration)}</span>
+                </div>
+                <div class="run-regions">
+                    ${regionsHTML}
+                </div>
+            `;
+
+            elements.historyGrid.appendChild(widget);
         }
     });
 }
